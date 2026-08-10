@@ -2,5 +2,5 @@ fastapi
 uvicorn
 python-dotenv
 google-genai
-playwright
+playwright==1.52.0
 openai
