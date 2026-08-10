@@ -11,7 +11,7 @@ class BrowserService:
         with sync_playwright() as p:
 
             browser = p.chromium.launch(
-                headless=False
+                headless=True
             )
 
             page = browser.new_page()
