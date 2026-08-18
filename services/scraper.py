@@ -1,4 +1,4 @@
-from playwright.sync_api import Page
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
 
 class AmazonScraper:
@@ -7,41 +7,63 @@ class AmazonScraper:
 
         products = []
 
-        cards = page.locator("div[data-component-type='s-search-result']")
+        cards = page.locator(
+            "div[data-component-type='s-search-result']"
+        )
 
-        count = min(cards.count(), 5)
+        try:
+            cards.first.wait_for(
+                state="attached",
+                timeout=30000
+            )
+        except PlaywrightTimeoutError:
+            return products
+
+        # Give Amazon a moment to finish rendering
+        page.wait_for_timeout(2000)
+
+        try:
+            count = min(cards.count(), 5)
+        except Exception:
+            return products
 
         for i in range(count):
 
-            card = cards.nth(i)
-
             try:
+                card = cards.nth(i)
 
-                name = card.locator("h2 span").inner_text()
-
-            except:
                 name = "N/A"
-
-            try:
-
-                price = card.locator(".a-price-whole").first.inner_text()
-
-            except:
                 price = "N/A"
-
-            try:
-
-                rating = card.locator(".a-icon-alt").first.inner_text()
-
-            except:
                 rating = "No Rating"
 
-            products.append(
-                {
+                try:
+                    name = card.locator(
+                        "h2 span"
+                    ).first.inner_text(timeout=5000)
+                except Exception:
+                    pass
+
+                try:
+                    price = card.locator(
+                        ".a-price-whole"
+                    ).first.inner_text(timeout=5000)
+                except Exception:
+                    pass
+
+                try:
+                    rating = card.locator(
+                        ".a-icon-alt"
+                    ).first.inner_text(timeout=5000)
+                except Exception:
+                    pass
+
+                products.append({
                     "name": name,
                     "price": price,
-                    "rating": rating,
-                }
-            )
+                    "rating": rating
+                })
+
+            except Exception:
+                continue
 
         return products
