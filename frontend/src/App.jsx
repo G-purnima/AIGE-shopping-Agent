@@ -34,8 +34,12 @@ function App() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to get recommendation");
-      }
+  const errorText = await response.text();
+  throw new Error(
+    `Backend error ${response.status}: ${errorText}`
+  );
+}
+
 
       const data = await response.json();
 
@@ -45,10 +49,7 @@ function App() {
 
       console.error(error);
 
-      setError(
-        "Something went wrong. Make sure the FastAPI server is running."
-      );
-
+      setError(error.message);
     } finally {
 
       setLoading(false);
