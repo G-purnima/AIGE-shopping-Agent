@@ -1,4 +1,4 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 from services.scraper import AmazonScraper
 
 
@@ -16,19 +16,44 @@ class BrowserService:
 
             page = browser.new_page()
 
-            page.goto("https://www.amazon.in")
+            try:
+                # Open Amazon
+                page.goto(
+                    "https://www.amazon.in",
+                    wait_until="domcontentloaded",
+                    timeout=60000
+                )
 
-            page.fill(
-                "#twotabsearchtextbox",
-                product
-            )
+                # Wait for search box
+                page.locator("#twotabsearchtextbox").wait_for(
+                    state="visible",
+                    timeout=30000
+                )
 
-            page.keyboard.press("Enter")
+                # Search product
+                page.fill(
+                    "#twotabsearchtextbox",
+                    product
+                )
 
-            page.wait_for_timeout(5000)
+                page.keyboard.press("Enter")
 
-            products = scraper.extract_products(page)
+                # Wait for navigation to finish
+                try:
+                    page.wait_for_load_state(
+                        "domcontentloaded",
+                        timeout=30000
+                    )
+                except PlaywrightTimeoutError:
+                    pass
 
-            browser.close()
+                # Give Amazon a little time to render products
+                page.wait_for_timeout(3000)
 
-            return products
+                # Extract products
+                products = scraper.extract_products(page)
+
+                return products
+
+            finally:
+                browser.close()
