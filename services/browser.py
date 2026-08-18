@@ -23,23 +23,18 @@ class BrowserService:
                     timeout=60000
                 )
 
-                search_box = page.locator(
-                    "#twotabsearchtextbox"
-                )
+                search_box = page.locator("#twotabsearchtextbox")
 
-                search_box.wait_for(
-                    state="visible",
-                    timeout=30000
+                search_box.fill(
+                    product,
+                    timeout=60000
                 )
-
-                search_box.fill(product)
 
                 search_box.press("Enter")
 
-                # Wait specifically for Amazon's search results
                 page.wait_for_selector(
                     "div[data-component-type='s-search-result']",
-                    timeout=30000
+                    timeout=60000
                 )
 
                 products = scraper.extract_products(page)
